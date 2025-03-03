@@ -5,6 +5,11 @@ import IconGrade from './assets/icons/grade.svg';
 
 export default function App() {
   return (
-    <div><IconAlarm /><IconCar /><IconEmail /><IconGrade /></div>
-  )
+    <div>
+      <IconAlarm />
+      <IconCar />
+      <IconEmail />
+      <IconGrade />
+    </div>
+  );
 }

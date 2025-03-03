@@ -33,9 +33,11 @@ export default (options?: SvgSpriteOptions) => {
     name: 'svg-sprite',
 
     async transform(src, filepath) {
-      if (!micromatch.isMatch(filepath, match, {
-        dot: true,
-      })) {
+      if (
+        !micromatch.isMatch(filepath, match, {
+          dot: true,
+        })
+      ) {
         return undefined;
       }
 
@@ -54,11 +56,13 @@ export default (options?: SvgSpriteOptions) => {
               prefix: hash,
             },
           },
-          ...svgoOptions?.plugins ?? [],
+          ...(svgoOptions?.plugins ?? []),
         ],
       }).data;
 
-      const symbolId = (options?.symbolId ?? 'icon-[name]').replace(/\[hash\]/g, hash).replace(/\[name\]/g, name);
+      const symbolId = (options?.symbolId ?? 'icon-[name]')
+        .replace(/\[hash\]/g, hash)
+        .replace(/\[name\]/g, name);
 
       const symbolResults = svgToSymbol(optimizedSvg, symbolId);
 

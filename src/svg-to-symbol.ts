@@ -1,6 +1,4 @@
-import {
-  DOMParser, XMLSerializer, Document, Element,
-} from '@xmldom/xmldom';
+import { DOMParser, XMLSerializer, Document, Element } from '@xmldom/xmldom';
 import micromatch from 'micromatch';
 
 const preserveAttrs = [
@@ -17,7 +15,8 @@ const preserveAttrs = [
 
 function findSvgNode(doc: Document): Element | undefined {
   return Array.from(doc.childNodes).find(
-    (node) => node.nodeType === doc.ELEMENT_NODE && (node as Element).tagName === 'svg',
+    (node) =>
+      node.nodeType === doc.ELEMENT_NODE && (node as Element).tagName === 'svg',
   ) as Element | undefined;
 }
 

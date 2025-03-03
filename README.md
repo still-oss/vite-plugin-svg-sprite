@@ -25,10 +25,10 @@ const config = {
   plugins: [
     createSvgSpritePlugin({
       exportType: 'vanilla', // or 'react' or 'vue'
-      include: '**/icons/*.svg'
+      include: '**/icons/*.svg',
     }),
   ],
-}
+};
 ```
 
 ### React
@@ -38,7 +38,7 @@ For React projects, set the `exportType` to `'react'` to import SVGs as componen
 ```javascript
 import IconFoo from './icons/foo.svg';
 
-<IconFoo />
+<IconFoo />;
 ```
 
 This may seem similar to `svgr` but internally they are different.
@@ -52,7 +52,7 @@ For Vue projects, set the `exportType` to `'vue'` to import SVGs as components:
 ```javascript
 import IconFoo from './icons/foo.svg';
 
-<IconFoo />
+<IconFoo />;
 ```
 
 ### Non-React / Non-Vue
@@ -83,7 +83,8 @@ To get proper type hints in TypeScript, include the appropriate type definitions
 
 - **symbolId**: (`string`, optional) Controls the generated symbol ID. Default is `'icon-[name]'`.
 
-- **exportType**: (`'vanilla' | 'react' | 'vue'`, optional) Determines the type of the exported value. Default is `'vanilla'`. 
+- **exportType**: (`'vanilla' | 'react' | 'vue'`, optional) Determines the type of the exported value. Default is `'vanilla'`.
+
   - If set to `'vanilla'`, the value will be the `symbolId`.
   - If set to `'react'`, the value will be a React component.
   - If set to `'vue'`, the value will be a Vue component.

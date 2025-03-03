@@ -11,7 +11,8 @@ const config = {
       include: '**/icons/**/*.svg',
       exportType: 'react',
       symbolId: 'icon-[name]-[hash]',
-    })],
+    }),
+  ],
 };
 
 export default config;

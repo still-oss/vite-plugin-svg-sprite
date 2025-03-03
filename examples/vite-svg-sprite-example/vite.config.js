@@ -12,7 +12,8 @@ const config = {
     createSvgSpritePlugin({
       include: '**/icons/**/*.svg',
       symbolId: 'icon-[name]-[hash]',
-    })],
+    }),
+  ],
 };
 
 export default config;

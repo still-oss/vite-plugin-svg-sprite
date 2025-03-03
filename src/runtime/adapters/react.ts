@@ -3,13 +3,17 @@ import { type Adapter } from '../types.js';
 import { capitalizeFirstLetter } from '../utils.js';
 
 export const adapter: Adapter = (id, name) => {
-  const Icon = memo((props) => (
-    createElement('svg', {
-      width: '1em',
-      height: '1em',
-      ...props,
-    }, createElement('use', { xlinkHref: `#${id}` }))
-  ));
+  const Icon = memo((props) =>
+    createElement(
+      'svg',
+      {
+        width: '1em',
+        height: '1em',
+        ...props,
+      },
+      createElement('use', { xlinkHref: `#${id}` }),
+    ),
+  );
 
   Icon.displayName = `Icon${capitalizeFirstLetter(name)}`;
 

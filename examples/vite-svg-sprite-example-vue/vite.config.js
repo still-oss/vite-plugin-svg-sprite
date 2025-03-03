@@ -11,7 +11,8 @@ const config = {
       include: '**/icons/**/*.svg',
       exportType: 'vue',
       symbolId: 'icon-[name]-[hash]',
-    })],
+    }),
+  ],
 };
 
 export default config;
