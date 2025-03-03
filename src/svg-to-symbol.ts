@@ -1,5 +1,5 @@
 import { DOMParser, XMLSerializer, Document, Element } from '@xmldom/xmldom';
-import micromatch from 'micromatch';
+import picomatch from 'picomatch';
 
 const preserveAttrs = [
   'viewBox',
@@ -34,7 +34,7 @@ export function svgToSymbol(xml: string, id: string) {
   symbol.setAttribute('id', id);
 
   Array.from(svg.attributes).forEach((attr) => {
-    if (micromatch.isMatch(attr.name, preserveAttrs)) {
+    if (picomatch.isMatch(attr.name, preserveAttrs)) {
       symbol.setAttribute(attr.name, attr.value);
     }
   });

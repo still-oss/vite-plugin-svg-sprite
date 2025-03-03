@@ -1,7 +1,7 @@
 import p from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import micromatch from 'micromatch';
+import picomatch from 'picomatch';
 import { optimize, Config as SvgoOptimizeOptions } from 'svgo';
 import { Plugin } from 'vite';
 import { svgToSymbol } from './svg-to-symbol.js';
@@ -27,7 +27,7 @@ function getHash(content: string) {
 }
 
 export default (options?: SvgSpriteOptions) => {
-  const match = options?.include ?? '**.svg';
+  const match = picomatch(options?.include ?? '**.svg', { dot: true });
   const svgoOptions = options?.svgo;
   const containerSelector = options?.containerSelector
     ? stringify(options.containerSelector)
@@ -49,11 +49,7 @@ export default (options?: SvgSpriteOptions) => {
         };
       }
 
-      if (
-        !micromatch.isMatch(filepath, match, {
-          dot: true,
-        })
-      ) {
+      if (!match(filepath)) {
         return undefined;
       }
 
