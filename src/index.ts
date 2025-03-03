@@ -17,6 +17,7 @@ export interface SvgSpriteOptions {
   svgo?: SvgoOptimizeOptions;
   exportType?: (typeof exportTypes)[number];
   moduleSideEffects?: boolean;
+  containerSelector?: string;
 }
 
 function getHash(content: string) {
@@ -28,11 +29,26 @@ function getHash(content: string) {
 export default (options?: SvgSpriteOptions) => {
   const match = options?.include ?? '**.svg';
   const svgoOptions = options?.svgo;
+  const containerSelector = options?.containerSelector
+    ? stringify(options.containerSelector)
+    : undefined;
 
   const plugin: Plugin = {
     name: 'svg-sprite',
 
     async transform(src, filepath) {
+      if (
+        containerSelector &&
+        /\/vite-plugin-svg-sprite\/.+\/inject\.js/.test(filepath)
+      ) {
+        return {
+          code: src.replace(
+            'document.body',
+            `document.querySelector(${containerSelector})`,
+          ),
+        };
+      }
+
       if (
         !micromatch.isMatch(filepath, match, {
           dot: true,
