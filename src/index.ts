@@ -1,4 +1,5 @@
-import p from 'node:path';
+import path from 'node:path';
+import { dedent } from 'radashi';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import picomatch from 'picomatch';
@@ -27,6 +28,11 @@ function getHash(content: string) {
 }
 
 export default (options?: SvgSpriteOptions) => {
+  const exportType = options?.exportType ?? 'vanilla';
+  if (!exportTypes.includes(exportType)) {
+    throw new Error(`invalid export type: ${exportType}`);
+  }
+
   const match = picomatch(options?.include ?? '**.svg', { dot: true });
   const svgoOptions = options?.svgo;
   const containerSelector = options?.containerSelector
@@ -36,36 +42,36 @@ export default (options?: SvgSpriteOptions) => {
   const plugin: Plugin = {
     name: 'svg-sprite',
 
-    async transform(src, filepath) {
+    async transform(code, id) {
       if (
         containerSelector &&
-        /\/vite-plugin-svg-sprite\/.+\/inject\.js/.test(filepath)
+        /\/vite-plugin-svg-sprite\/.+\/inject\.js/.test(id)
       ) {
         return {
-          code: src.replace(
+          code: code.replace(
             'document.body',
             `document.querySelector(${containerSelector})`,
           ),
         };
       }
 
-      if (!match(filepath)) {
+      if (!match(id)) {
         return undefined;
       }
 
-      const code = await fs.promises.readFile(filepath, 'utf-8');
+      const rawSvg = await fs.promises.readFile(id, 'utf-8');
 
-      const hash = getHash(code).slice(0, 8);
+      const svgHash = getHash(rawSvg).slice(0, 8);
 
-      const { name } = p.parse(filepath);
+      const { name } = path.parse(id);
 
-      const optimizedSvg = optimize(code, {
+      const optimizedSvg = optimize(rawSvg, {
         ...svgoOptions,
         plugins: [
           {
             name: 'prefixIds',
             params: {
-              prefix: hash,
+              prefix: svgHash,
             },
           },
           ...(svgoOptions?.plugins ?? []),
@@ -73,30 +79,25 @@ export default (options?: SvgSpriteOptions) => {
       }).data;
 
       const symbolId = (options?.symbolId ?? 'icon-[name]')
-        .replace(/\[hash\]/g, hash)
+        .replace(/\[hash\]/g, svgHash)
         .replace(/\[name\]/g, name);
 
       const symbolResults = svgToSymbol(optimizedSvg, symbolId);
 
       if (!symbolResults) {
-        throw new Error(`invalid svg file: ${filepath}`);
+        throw new Error(`invalid svg file: ${id}`);
       }
 
       const { symbolXml, attributes } = symbolResults;
 
-      let exportType = options?.exportType;
-      if (!exportType || !exportTypes.includes(exportType)) {
-        exportType = 'vanilla';
-      }
-
-      const codeToReturn = `
+      const generatedCode = dedent`
         import addSymbol from 'vite-plugin-svg-sprite/runtime/inject.js';
         import { adapter } from 'vite-plugin-svg-sprite/runtime/adapters/${exportType}.js';
         const id = ${stringify(symbolId)};
         const name = ${stringify(name)};
         const symbolXml = ${stringify(symbolXml)};
         const { dispose } = addSymbol(symbolXml, id);
-        
+
         export default adapter(id, name);
         export const attributes = ${stringify(attributes)}
 
@@ -107,7 +108,7 @@ export default (options?: SvgSpriteOptions) => {
       `;
 
       return {
-        code: codeToReturn,
+        code: generatedCode,
         moduleSideEffects: options?.moduleSideEffects ?? true,
         map: { mappings: '' },
       };
