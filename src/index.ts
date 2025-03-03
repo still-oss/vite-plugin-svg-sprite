@@ -45,7 +45,7 @@ export default (options?: SvgSpriteOptions) => {
     async transform(code, id) {
       if (
         containerSelector &&
-        /\/vite-plugin-svg-sprite\/.+\/inject\.js/.test(id)
+        /\/vite-plugin-svg-sprite\/.+\/register\.js/.test(id)
       ) {
         return {
           code: code.replace(
@@ -91,18 +91,19 @@ export default (options?: SvgSpriteOptions) => {
       const { symbolXml, attributes } = symbolResults;
 
       const generatedCode = dedent`
-        import addSymbol from 'vite-plugin-svg-sprite/runtime/inject.js';
+        import registerSymbol from 'vite-plugin-svg-sprite/runtime/register.js';
         import { adapter } from 'vite-plugin-svg-sprite/runtime/adapters/${exportType}.js';
-        const id = ${stringify(symbolId)};
-        const name = ${stringify(name)};
-        const symbolXml = ${stringify(symbolXml)};
-        const { dispose } = addSymbol(symbolXml, id);
 
-        export default adapter(id, name);
+        const id = ${stringify(symbolId)};
+        const name = ${stringify(capitalizeFirst(name))};
+        const symbolXml = ${stringify(symbolXml)};
+        const { mount, unmount } = registerSymbol(symbolXml, id);
+
+        export default adapter(id, name, mount);
         export const attributes = ${stringify(attributes)}
 
         if (import.meta.hot) {
-          import.meta.hot.dispose(dispose);
+          import.meta.hot.dispose(unmount);
           import.meta.hot.accept();
         }
       `;
@@ -117,3 +118,7 @@ export default (options?: SvgSpriteOptions) => {
 
   return plugin;
 };
+
+function capitalizeFirst(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

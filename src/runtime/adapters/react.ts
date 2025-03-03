@@ -1,10 +1,10 @@
 import { memo, createElement } from 'react';
 import { type Adapter } from '../types.js';
-import { capitalizeFirstLetter } from '../utils.js';
 
-export const adapter: Adapter = (id, name) => {
-  const Icon = memo((props) =>
-    createElement(
+export const adapter: Adapter = (id, name, mount) => {
+  const Icon = memo((props) => {
+    mount();
+    return createElement(
       'svg',
       {
         width: '1em',
@@ -12,10 +12,10 @@ export const adapter: Adapter = (id, name) => {
         ...props,
       },
       createElement('use', { xlinkHref: `#${id}` }),
-    ),
-  );
+    );
+  });
 
-  Icon.displayName = `Icon${capitalizeFirstLetter(name)}`;
+  Icon.displayName = `Icon${name}`;
 
   return Icon;
 };

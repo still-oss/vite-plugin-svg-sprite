@@ -1,11 +1,11 @@
 import { defineComponent, h } from 'vue';
 import { type Adapter } from '../types.js';
-import { capitalizeFirstLetter } from '../utils.js';
 
-export const adapter: Adapter = (id, name) =>
+export const adapter: Adapter = (id, name, mount) =>
   defineComponent({
-    name: `Icon${capitalizeFirstLetter(name)}`,
-    setup(props, { attrs }) {
+    name: `Icon${name}`,
+    setup(_props, { attrs }) {
+      mount();
       return () =>
         h(
           'svg',

@@ -1,8 +1,21 @@
-type AddSymbol = (symbol: string, id: string) => () => void;
+import { noop } from 'radashi';
 
-function createAddSymbol(): AddSymbol {
+type RegisterFunction = (
+  symbol: string,
+  id: string,
+) => {
+  mount: () => void;
+  unmount: () => void;
+};
+
+function createRegisterFunction(): RegisterFunction {
   if (typeof document === 'undefined') {
-    return () => () => {};
+    const ssrFallback = {
+      mount: noop,
+      unmount: noop,
+    };
+
+    return () => ssrFallback;
   }
 
   // This must be the only reference to document body, or else the Vite plugin will fail to
@@ -40,23 +53,30 @@ function createAddSymbol(): AddSymbol {
     insertRoot();
   }
 
-  return function addSymbol(symbol: string, id: string) {
+  return function registerSymbol(symbol: string, id: string) {
     if (idSet.has(id) || containerRoot.getElementById(id)) {
       console.warn(
         `Icon #${id} was repeatedly registered. It must be globally unique.`,
       );
     }
+
     idSet.add(id);
 
-    root.insertAdjacentHTML('beforeend', symbol);
+    let symbolElement: ChildNode | null = null;
 
-    const el = root.lastChild;
-
-    return function dispose() {
-      idSet.delete(id);
-      el?.remove();
+    return {
+      mount() {
+        if (!symbolElement) {
+          root.insertAdjacentHTML('beforeend', symbol);
+          symbolElement = root.lastChild;
+        }
+      },
+      unmount() {
+        idSet.delete(id);
+        symbolElement?.remove();
+      },
     };
   };
 }
 
-export default createAddSymbol();
+export default createRegisterFunction();
