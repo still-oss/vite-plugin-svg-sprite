@@ -34,19 +34,24 @@ export default (options?: SvgSpriteOptions) => {
   }
 
   const match = picomatch(options?.include ?? '**.svg', { dot: true });
-  const svgoOptions = options?.svgo;
   const containerSelector = options?.containerSelector
     ? stringify(options.containerSelector)
     : undefined;
 
+  const specialIdRE = /[?#\0]/;
+
   const plugin: Plugin = {
     name: 'svg-sprite',
+    enforce: 'pre',
 
-    async resolveId(id) {
-      if (match(id)) {
+    async load(id) {
+      if (!specialIdRE.test(id) && match(id)) {
+        const generatedCode = await generateSvgModule(id, exportType, options);
+
         return {
-          id: id + '.js',
-          meta: { svgSprite: true },
+          code: generatedCode,
+          moduleSideEffects: options?.moduleSideEffects ?? true,
+          map: generateLineToLineSourceMap(generatedCode, id, id + '.js'),
         };
       }
     },
@@ -64,72 +69,66 @@ export default (options?: SvgSpriteOptions) => {
           map: generateLineToLineSourceMap(code, id),
         };
       }
-
-      const meta = this.getModuleInfo(id)?.meta;
-      if (!meta?.svgSprite) {
-        return;
-      }
-
-      const fileName = id.slice(0, -3);
-      const rawSvg = await fs.promises.readFile(fileName, 'utf-8');
-
-      const svgHash = getHash(rawSvg).slice(0, 8);
-
-      const { name } = path.parse(id);
-
-      const optimizedSvg = optimize(rawSvg, {
-        ...svgoOptions,
-        plugins: [
-          {
-            name: 'prefixIds',
-            params: {
-              prefix: svgHash,
-            },
-          },
-          ...(svgoOptions?.plugins ?? []),
-        ],
-      }).data;
-
-      const symbolId = (options?.symbolId ?? 'icon-[name]')
-        .replace(/\[hash\]/g, svgHash)
-        .replace(/\[name\]/g, name);
-
-      const symbolResults = svgToSymbol(optimizedSvg, symbolId);
-
-      if (!symbolResults) {
-        throw new Error(`Invalid svg file: ${fileName}`);
-      }
-
-      const { symbolXml, attributes } = symbolResults;
-
-      const generatedCode = dedent`
-        import registerSymbol from 'vite-plugin-svg-sprite/runtime/register.js';
-        import { adapter } from 'vite-plugin-svg-sprite/runtime/adapters/${exportType}.js';
-
-        const id = ${stringify(symbolId)};
-        const name = ${stringify(capitalizeFirst(name))};
-        const symbolXml = ${stringify(symbolXml)};
-        const { mount, unmount } = registerSymbol(symbolXml, id);
-
-        export default adapter(id, name, mount);
-        export const attributes = ${stringify(attributes)}
-
-        if (import.meta.hot) {
-          import.meta.hot.dispose(unmount);
-          import.meta.hot.accept();
-        }
-      `;
-
-      return {
-        code: generatedCode,
-        moduleSideEffects: options?.moduleSideEffects ?? true,
-        map: generateLineToLineSourceMap(generatedCode, id),
-      };
     },
   };
 
   return plugin;
 };
+
+async function generateSvgModule(
+  id: string,
+  exportType: string,
+  options?: SvgSpriteOptions,
+) {
+  const { name } = path.parse(id);
+
+  const rawSvg = await fs.promises.readFile(id, 'utf-8');
+  const svgHash = getHash(rawSvg).slice(0, 8);
+
+  const svgoOptions = options?.svgo;
+  const optimizedSvg = optimize(rawSvg, {
+    ...svgoOptions,
+    plugins: [
+      {
+        name: 'prefixIds',
+        params: {
+          prefix: svgHash,
+        },
+      },
+      ...(svgoOptions?.plugins ?? []),
+    ],
+  }).data;
+
+  const symbolId = (options?.symbolId ?? 'icon-[name]')
+    .replace(/\[hash\]/g, svgHash)
+    .replace(/\[name\]/g, name);
+
+  const symbolResults = svgToSymbol(optimizedSvg, symbolId);
+
+  if (!symbolResults) {
+    throw new Error(`Invalid svg file: ${id}`);
+  }
+
+  const { symbolXml, attributes } = symbolResults;
+
+  return dedent`
+    import registerSymbol from 'vite-plugin-svg-sprite/runtime/register.js';
+    import { adapter } from 'vite-plugin-svg-sprite/runtime/adapters/${exportType}.js';
+
+    const id = ${stringify(symbolId)};
+    const name = ${stringify(capitalizeFirst(name))};
+    const symbolXml = ${stringify(symbolXml)};
+    const symbol = registerSymbol(symbolXml, id);
+
+    export default adapter(id, name, symbol.mount);
+    export const attributes = ${stringify(attributes)}
+
+    if (import.meta.hot) {
+      import.meta.hot.dispose(symbol.unmount);
+      import.meta.hot.accept();
+    }
+  `;
+}
 
 function generateLineToLineSourceMap(
   code: string,
