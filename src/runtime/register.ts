@@ -59,19 +59,20 @@ function createRegisterFunction(): RegisterFunction {
 
     return {
       mount() {
-        if (!symbolElement) {
-          if (!root?.isConnected) {
-            setup();
-          }
-          if (symbolIds.has(id) || containerRoot.getElementById(id)) {
-            console.warn(
-              `Icon #${id} was repeatedly registered. It must be globally unique.`,
-            );
-          }
-          symbolIds.add(id);
-          root.insertAdjacentHTML('beforeend', symbol);
-          symbolElement = root.lastChild;
+        if (symbolElement?.isConnected) {
+          return;
         }
+        if (!root?.isConnected) {
+          setup();
+        }
+        if (symbolIds.has(id) || containerRoot.getElementById(id)) {
+          console.warn(
+            `Icon #${id} was repeatedly registered. It must be globally unique.`,
+          );
+        }
+        symbolIds.add(id);
+        root.insertAdjacentHTML('beforeend', symbol);
+        symbolElement = root.lastChild;
       },
       unmount() {
         if (symbolElement) {
