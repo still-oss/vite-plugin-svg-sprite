@@ -20,7 +20,7 @@ function createRegisterFunction(): RegisterFunction {
 
   let root: SVGSVGElement;
   let containerRoot: Document | ShadowRoot;
-  let idSet: Set<string>;
+  let symbolIds: Set<string>;
 
   const setup = () => {
     // This must be the only reference to document body, or else the Vite plugin will fail to
@@ -31,9 +31,7 @@ function createRegisterFunction(): RegisterFunction {
       container.shadowRoot?.querySelector('body') ?? container;
 
     containerRoot = container.shadowRoot ?? containerDoc;
-    idSet =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (container as any)._SVG_SPRITE_IDS_ ||= new Set();
+    symbolIds = new Set();
 
     root = containerDoc.createElementNS('http://www.w3.org/2000/svg', 'svg');
     root.style.position = 'absolute';
@@ -62,22 +60,23 @@ function createRegisterFunction(): RegisterFunction {
     return {
       mount() {
         if (!symbolElement) {
-          if (!root) setup();
-          root.insertAdjacentHTML('beforeend', symbol);
-          symbolElement = root.lastChild;
-
-          if (idSet.has(id) || containerRoot.getElementById(id)) {
+          if (!root?.isConnected) {
+            setup();
+          }
+          if (symbolIds.has(id) || containerRoot.getElementById(id)) {
             console.warn(
               `Icon #${id} was repeatedly registered. It must be globally unique.`,
             );
           }
-          idSet.add(id);
+          symbolIds.add(id);
+          root.insertAdjacentHTML('beforeend', symbol);
+          symbolElement = root.lastChild;
         }
       },
       unmount() {
         if (symbolElement) {
           symbolElement.remove();
-          idSet.delete(id);
+          symbolIds.delete(id);
         }
       },
     };
