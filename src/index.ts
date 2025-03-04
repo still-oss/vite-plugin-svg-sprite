@@ -42,6 +42,15 @@ export default (options?: SvgSpriteOptions) => {
   const plugin: Plugin = {
     name: 'svg-sprite',
 
+    async resolveId(id) {
+      if (match(id)) {
+        return {
+          id: id + '.js',
+          meta: { svgSprite: true },
+        };
+      }
+    },
+
     async transform(code, id) {
       if (
         containerSelector &&
@@ -56,11 +65,13 @@ export default (options?: SvgSpriteOptions) => {
         };
       }
 
-      if (!match(id)) {
-        return undefined;
+      const meta = this.getModuleInfo(id)?.meta;
+      if (!meta?.svgSprite) {
+        return;
       }
 
-      const rawSvg = await fs.promises.readFile(id, 'utf-8');
+      const fileName = id.slice(0, -3);
+      const rawSvg = await fs.promises.readFile(fileName, 'utf-8');
 
       const svgHash = getHash(rawSvg).slice(0, 8);
 
@@ -86,7 +97,7 @@ export default (options?: SvgSpriteOptions) => {
       const symbolResults = svgToSymbol(optimizedSvg, symbolId);
 
       if (!symbolResults) {
-        throw new Error(`invalid svg file: ${id}`);
+        throw new Error(`Invalid svg file: ${fileName}`);
       }
 
       const { symbolXml, attributes } = symbolResults;
@@ -112,14 +123,7 @@ export default (options?: SvgSpriteOptions) => {
       return {
         code: generatedCode,
         moduleSideEffects: options?.moduleSideEffects ?? true,
-        map: {
-          version: 3,
-          file: id,
-          sources: [id + '.js'],
-          sourcesContent: [generatedCode],
-          names: [],
-          mappings: 'AAAA',
-        },
+        map: generateLineToLineSourceMap(generatedCode, id),
       };
     },
   };
