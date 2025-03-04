@@ -52,6 +52,7 @@ export default (options?: SvgSpriteOptions) => {
             'document.body',
             `document.querySelector(${containerSelector})`,
           ),
+          map: generateLineToLineSourceMap(code, id),
         };
       }
 
@@ -125,6 +126,25 @@ export default (options?: SvgSpriteOptions) => {
 
   return plugin;
 };
+
+function generateLineToLineSourceMap(
+  code: string,
+  fileName: string,
+  sourceFileName = fileName,
+) {
+  return {
+    version: 3,
+    file: fileName,
+    sources: [sourceFileName],
+    sourcesContent: [code],
+    names: [],
+    mappings:
+      'AAAA;' +
+      Array(code.split('\n').length - 1)
+        .fill('AACA')
+        .join(';'),
+  };
+}
 
 function capitalizeFirst(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
