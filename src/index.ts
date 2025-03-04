@@ -111,7 +111,14 @@ export default (options?: SvgSpriteOptions) => {
       return {
         code: generatedCode,
         moduleSideEffects: options?.moduleSideEffects ?? true,
-        map: { mappings: '' },
+        map: {
+          version: 3,
+          file: id,
+          sources: [id + '.js'],
+          sourcesContent: [generatedCode],
+          names: [],
+          mappings: 'AAAA',
+        },
       };
     },
   };
