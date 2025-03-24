@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-svg-sprite",
+  "name": "@still-oss/vite-plugin-svg-sprite",
   "version": "0.7.0",
   "description": "SVG sprite plugin for Vite",
   "type": "module",
