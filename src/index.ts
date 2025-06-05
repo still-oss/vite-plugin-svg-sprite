@@ -9,7 +9,7 @@ import { svgToSymbol } from './svg-to-symbol.js';
 
 const { stringify } = JSON;
 
-const exportTypes = ['vanilla', 'react', 'vue'] as const;
+const exportTypes = ['vanilla', 'react', 'preact', 'vue'] as const;
 
 export type { SvgoOptimizeOptions };
 export interface SvgSpriteOptions {
