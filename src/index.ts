@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { dedent } from 'radashi';
+import { dedent, pascal } from 'radashi';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import picomatch from 'picomatch';
@@ -116,7 +116,7 @@ async function generateSvgModule(
     import { adapter } from 'vite-plugin-svg-sprite/runtime/adapters/${exportType}.js';
 
     const id = ${stringify(symbolId)};
-    const name = ${stringify(capitalizeFirst(name))};
+    const name = ${stringify(pascal(name))};
     const symbolXml = ${stringify(symbolXml)};
     const symbol = registerSymbol(symbolXml, id);
 
@@ -147,8 +147,4 @@ function generateLineToLineSourceMap(
         .fill('AACA')
         .join(';'),
   };
-}
-
-function capitalizeFirst(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
